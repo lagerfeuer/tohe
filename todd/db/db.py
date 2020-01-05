@@ -1,7 +1,7 @@
 import os
 import sys
 import sqlite3
-
+from typing import Optional
 
 
 class ToddDB:
@@ -24,5 +24,8 @@ class ToddDB:
 
         return os.path.join(data_home, ToddDB.DEFAULT_DB_FILE_NAME)
 
-    def __init__(self, db_file: str=ToddDB._get_default_db_file()):
-        self.db_file = db_file
+    def __init__(self, db_file: Optional[str] = None):
+        if not db_file:
+            self.db_file = ToddDB._get_default_db_file()
+        else:
+            self.db_file = db_file

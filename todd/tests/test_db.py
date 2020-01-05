@@ -3,8 +3,7 @@ import tempfile
 import os
 from os.path import exists, join
 
-import todd.db
-# from todd.db import *
+from todd.db import ToddDB
 
 TEMP_DB_DIR = tempfile.mkdtemp(prefix='todd_test_')
 
@@ -19,6 +18,7 @@ class ToddDBTest(unittest.TestCase):
 
     def test_add(self):
         self.assertTrue(False)
+
 
 if __name__ == "__main__":
     unittest.main()
