@@ -16,8 +16,20 @@ class ToddDBTest(unittest.TestCase):
         if exists(db_file):
             os.remove(db_file)
 
+    def test_defaults(self):
+        self.assertEqual(ToddDB.DEFAULT_DB_FILE_NAME, 'todd.db')
+
+    def test_dbfile_creation(self):
+        db = ToddDB()
+        db.cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='todo'")
+        self.assertEqual(int(db.cursor.fetchone()[0]), 1)
+
     def test_add(self):
-        self.assertTrue(False)
+        db = ToddDB()
+        test_data = ('header', 'body', ['test', 'tags'])
+        db.add('body', header='header', tags=['test', 'tags'])
+        db.cursor.execute('SELECT header, body, tags FROM todo')
+        self.assertEqual(db.cursor.fetchone(), test_data)
 
 
 if __name__ == "__main__":

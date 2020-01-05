@@ -1,7 +1,15 @@
 import os
 import sys
 import sqlite3
-from typing import Optional
+from typing import Optional, List
+
+from todd.log import *
+
+def adapt_list(lst):
+    return '|'.join(lst)
+
+def convert_tags(tags):
+    return [tag.decode('utf-8') for tag in tags.split(b'|')]
 
 
 class ToddDB:
@@ -29,3 +37,28 @@ class ToddDB:
             self.db_file = ToddDB._get_default_db_file()
         else:
             self.db_file = db_file
+        INFO('DB file is: %s' % self.db_file)
+        sqlite3.register_adapter(list, adapt_list)
+        sqlite3.register_converter('tags', convert_tags)
+
+        try:
+            self.conn = sqlite3.connect(self.db_file, detect_types=sqlite3.PARSE_DECLTYPES)
+            self.cursor = self.conn.cursor()
+            self.cursor.execute("""CREATE TABLE IF NOT EXISTS todo (
+            id INTEGER PRIMARY KEY,
+            header TEXT,
+            body TEXT NOT NULL,
+            tags TAGS DEFAULT ''
+            )""")
+            self.conn.commit()
+        except Exception as e:
+            ERROR('DB connection: %s' % e)
+            sys.exit(1)
+
+    def __del__(self):
+        self.conn.close()
+
+    def add(self, body: str, header: Optional[str] = None, tags: Optional[List[str]] = None):
+        self.cursor.execute('INSERT INTO todo(header, body, tags) VALUES (?,?,?)',
+                            (header, body, tags))
+        self.conn.commit()

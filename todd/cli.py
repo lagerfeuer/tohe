@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-
 from argparse import ArgumentParser
 
 __VERSION__ = '0.0.1'
