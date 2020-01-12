@@ -6,6 +6,9 @@ from typing import Optional, List, Union
 from todd.log import *  # pylint: disable=unused-wildcard-import
 from todd.util.status import Status
 
+Id = Union[List[int], int]
+Tags = Union[List[str], str]
+
 
 def adapt_list(lst) -> str:
     """Adapt list entries before writing to database.
@@ -101,8 +104,8 @@ class ToddDB:
         return Status.NOT_IMPLEMENTED
 
     def delete(self,
-               id: Union[List[int], int, None] = None,
-               tags: Union[List[str], str, None] = None) -> Status:
+               id: Optional[Id] = None,
+               tags: Optional[Tags] = None) -> Status:
         query = 'DELETE FROM todo WHERE '
         if id is None and tags is None:
             raise RuntimeError(
