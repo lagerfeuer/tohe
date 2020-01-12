@@ -1,18 +1,36 @@
 import os
 import sys
 import sqlite3
-from typing import Optional, List
+from typing import Optional, List, Union
 
-from todd.log import *
+from todd.log import *  # pylint: disable=unused-wildcard-import
+from todd.util.status import Status
 
-def adapt_list(lst):
+
+def adapt_list(lst) -> str:
+    """Adapt list entries before writing to database.
+
+    This function takes a list and serializes it in order to
+    write it to the sqlite database as string.
+    """
     return '|'.join(lst)
 
-def convert_tags(tags):
+
+def convert_tags(tags) -> list:
+    """Convert list entries after fetching it from the database.
+
+    This function takes a serialized list entry for tags and deserializes it
+    to return a Python list.
+    """
     return [tag.decode('utf-8') for tag in tags.split(b'|')]
 
 
 class ToddDB:
+    """Class representing a Todd instance, including the database connection to
+    the sqlite storage.
+
+    This class exposes methods to manipulate the database, like add, edit, delete and list.
+    """
     DEFAULT_DB_FILE_NAME = 'todd.db'
 
     @staticmethod
@@ -32,7 +50,7 @@ class ToddDB:
 
         return os.path.join(data_home, ToddDB.DEFAULT_DB_FILE_NAME)
 
-    def __init__(self, db_file: Optional[str] = None):
+    def __init__(self, db_file: Optional[str] = None) -> None:
         if not db_file:
             self.db_file = ToddDB._get_default_db_file()
         else:
@@ -42,12 +60,12 @@ class ToddDB:
         sqlite3.register_converter('tags', convert_tags)
 
         try:
-            self.conn = sqlite3.connect(self.db_file, detect_types=sqlite3.PARSE_DECLTYPES)
+            self.conn = sqlite3.connect(
+                self.db_file, detect_types=sqlite3.PARSE_DECLTYPES)
             self.cursor = self.conn.cursor()
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS todo (
             id INTEGER PRIMARY KEY,
-            header TEXT,
-            body TEXT NOT NULL,
+            todo TEXT NOT NULL,
             tags TAGS DEFAULT ''
             )""")
             self.conn.commit()
@@ -55,10 +73,46 @@ class ToddDB:
             ERROR('DB connection: %s' % e)
             sys.exit(1)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.conn.close()
 
-    def add(self, body: str, header: Optional[str] = None, tags: Optional[List[str]] = None):
-        self.cursor.execute('INSERT INTO todo(header, body, tags) VALUES (?,?,?)',
-                            (header, body, tags))
+    def count(self) -> int:
+        return self.cursor.execute('SELECT COUNT(*) FROM todo').fetchone()[0]
+
+    def add(self, todo: str, tags: Optional[List[str]] = None) -> Status:
+        try:
+            self.cursor.execute('INSERT INTO todo(todo, tags) VALUES (?,?)',
+                                (todo, tags))
+            self.conn.commit()
+        except sqlite3.DatabaseError as e:
+            ERROR("Database error: %s" % e)
+            return Status.FAIL
+        return Status.OK
+
+    def list(self) -> list:
+        self.cursor.execute('SELECT * FROM todo')
+        entries = self.cursor.fetchall()
+        return entries
+
+    def search(self, term: Union[List[str], str], wildcards: bool = True) -> List[int]:
+        return Status.NOT_IMPLEMENTED
+
+    def edit(self, id: int) -> Status:
+        return Status.NOT_IMPLEMENTED
+
+    def delete(self,
+               id: Union[List[int], int, None] = None,
+               tags: Union[List[str], str, None] = None) -> Status:
+        query = 'DELETE FROM todo WHERE '
+        if id is None and tags is None:
+            raise RuntimeError(
+                'DELETE was called, but neither id nor tags was supplied.')
+
+        cond_list = id if id else tags
+        if isinstance(cond_list, int) or isinstance(cond_list, str):
+            cond_list = [cond_list]
+        conditions = ' OR '.join(['id = %d' % e for e in cond_list])
+        query += conditions
+        self.cursor.execute(query)
         self.conn.commit()
+        return Status.OK
