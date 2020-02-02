@@ -1,6 +1,19 @@
 # todd
 Todd, the TODO list helper
 
+# Development
+
+## Setup
+```
+poetry install
+```
+
+## Unit tests
+```
+poetry run pytest --mypy --cov=todd/ tests/
+```
+
+
 ## TODO
 - [ ] Add docstrings
 - [ ] How should headers be treated?
