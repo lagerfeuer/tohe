@@ -66,11 +66,13 @@ class ToddDB:
             self.conn = sqlite3.connect(
                 self.db_file, detect_types=sqlite3.PARSE_DECLTYPES)
             self.cursor = self.conn.cursor()
-            self.cursor.execute("""CREATE TABLE IF NOT EXISTS todo (
-            id INTEGER PRIMARY KEY,
-            todo TEXT NOT NULL,
-            tags TAGS DEFAULT ''
-            )""")
+            self.cursor.execute(
+                """CREATE TABLE IF NOT EXISTS todo (
+                id INTEGER PRIMARY KEY,
+                todo TEXT NOT NULL,
+                tags TAGS DEFAULT ''
+                )"""
+            )
             self.conn.commit()
         except Exception as e:
             ERROR('DB connection: %s' % e)
@@ -105,15 +107,30 @@ class ToddDB:
         entries = self.cursor.fetchall()
         return entries
 
-    def edit(self, id: int) -> Status:
-        return Status.NOT_IMPLEMENTED
+    def edit(self,
+             id: int,
+             todo: Optional[str] = None,
+             tags: Optional[List[str]] = None) -> Status:
+        if todo is None and tags is None:
+            raise RuntimeError(
+                'EDIT: neither todo nor tags was supplied to be changed.')
+        if todo is not None and tags is not None:
+            raise RuntimeError(
+                'EDIT: both todo and tags should be changed. You can only change one at a time.')
+
+        column = 'todo' if todo else 'tags'
+        new = todo if todo else tags
+        query = f"UPDATE todo SET {column} = ? WHERE id = ?"
+        self.cursor.execute(query, (new, id))
+
+        return Status.OK
 
     def delete(self,
                id: Optional[Id] = None,
                tags: Optional[Tags] = None) -> Status:
         if id is None and tags is None:
             raise RuntimeError(
-                'DELETE was called, but neither id nor tags was supplied.')
+                'DELETE: but neither id nor tags was supplied.')
 
         # FIXME ugly code section
         # FIXME if id and tags are supplied, exit or include both in query?

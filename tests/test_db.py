@@ -57,7 +57,6 @@ class ToddDBTest(unittest.TestCase):
         entries = db.search("Your*")
         self.assertEqual([], entries)
 
-    @unittest.skip("Not implemented")
     def test_edit_id(self):
         db = ToddDB()
         db.add('body', tags=['test', 'tags'])
@@ -70,7 +69,7 @@ class ToddDBTest(unittest.TestCase):
         status = db.edit(id=1, tags='notag')
         self.assertEqual(status, Status.OK)
         db.cursor.execute('SELECT tags FROM todo')
-        self.assertEqual(db.cursor.fetchone()[0], 'notag')
+        self.assertEqual(db.cursor.fetchone()[0], ['notag'])
 
     def test_delete_arguments_none(self):
         db = ToddDB()
