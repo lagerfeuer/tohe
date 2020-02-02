@@ -4,13 +4,15 @@ Todd, the TODO list helper
 # Development
 
 ## Setup
-```
+```sh
 poetry install
 ```
 
 ## Unit tests
-```
+```sh
 poetry run pytest --mypy --cov=todd/ tests/
+# or
+poetry run python -m pytest --mypy --cov=todd/ tests/
 ```
 
 

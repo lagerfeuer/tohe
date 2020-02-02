@@ -98,7 +98,7 @@ class ToddDB:
         return entries
 
     def search(self, term: Union[List[str], str], wildcards: bool = True) -> List[int]:
-        return Status.NOT_IMPLEMENTED
+        return []
 
     def edit(self, id: int) -> Status:
         return Status.NOT_IMPLEMENTED
@@ -111,11 +111,21 @@ class ToddDB:
             raise RuntimeError(
                 'DELETE was called, but neither id nor tags was supplied.')
 
-        cond_list = id if id else tags
-        if isinstance(cond_list, int) or isinstance(cond_list, str):
-            cond_list = [cond_list]
-        conditions = ' OR '.join(['id = %d' % e for e in cond_list])
-        query += conditions
+        # FIXME ugly code section
+        # FIXME if id and tags are supplied, exit or include both in query?
+
+        if isinstance(id, int) or isinstance(id, str):
+            id = [id]
+        if isinstance(tags, int) or isinstance(tags, str):
+            tags = [tags]
+
+        conditions: List[str] = []
+        if id is not None:
+            conditions.extend(['id = %s' % str(e) for e in id])
+        if tags is not None:
+            conditions.extend(['tag = %s' % e for e in tags])
+
+        query += ' OR '.join(conditions)
         self.cursor.execute(query)
         self.conn.commit()
         return Status.OK
