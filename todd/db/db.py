@@ -98,8 +98,12 @@ class ToddDB:
         entries = self.cursor.fetchall()
         return entries
 
-    def search(self, term: Union[List[str], str], wildcards: bool = True) -> List[int]:
-        return []
+    def search(self, term: str, wildcards: bool = True) -> List[int]:
+        if wildcards:
+            term = term.replace('*', '%').replace('?', '_')
+        self.cursor.execute("SELECT * FROM todo WHERE todo LIKE ?", (term,))
+        entries = self.cursor.fetchall()
+        return entries
 
     def edit(self, id: int) -> Status:
         return Status.NOT_IMPLEMENTED

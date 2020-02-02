@@ -44,14 +44,18 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual(len(entries), 1)
         self.assertEqual(entries.pop(), test_data)
 
-    @unittest.skip("Not implemented")
     def test_search_id(self):
         db = ToddDB()
         db.add('MyTODO', ['tag'])
-        status = db.search("MyTODO")
-        status = db.search("MyTOD?")
-        status = db.search("My*")
-        self.assertEqual(status, Status.OK)
+        ref = db.list()
+        entries = db.search("MyTODO")
+        self.assertEqual(ref, entries)
+        entries = db.search("MyTOD?")
+        self.assertEqual(ref, entries)
+        entries = db.search("My*")
+        self.assertEqual(ref, entries)
+        entries = db.search("Your*")
+        self.assertEqual([], entries)
 
     @unittest.skip("Not implemented")
     def test_edit_id(self):
