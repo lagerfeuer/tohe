@@ -92,7 +92,8 @@ class ToddDB:
             return Status.FAIL
         return Status.OK
 
-    def list(self) -> list:
+    def list(self, tags: Optional[Tags] = None) -> list:
+        # TODO add support for tags
         self.cursor.execute('SELECT * FROM todo')
         entries = self.cursor.fetchall()
         return entries
@@ -106,7 +107,6 @@ class ToddDB:
     def delete(self,
                id: Optional[Id] = None,
                tags: Optional[Tags] = None) -> Status:
-        query = 'DELETE FROM todo WHERE '
         if id is None and tags is None:
             raise RuntimeError(
                 'DELETE was called, but neither id nor tags was supplied.')
@@ -125,6 +125,7 @@ class ToddDB:
         if tags is not None:
             conditions.extend(['tag = %s' % e for e in tags])
 
+        query = 'DELETE FROM todo WHERE '
         query += ' OR '.join(conditions)
         self.cursor.execute(query)
         self.conn.commit()
