@@ -42,23 +42,33 @@ class ToddDB:
         Returns: database directory path (str)
         """
         data_home = os.getenv('XDG_DATA_HOME')
-        if data_home is None:
-            data_home = os.getenv('HOME')
-            if data_home is not None:
-                data_home = os.path.join(data_home, '.local', 'share')
+        if data_home is None and (home := os.getenv('HOME')) is not None:
+            data_home = os.path.join(home, '.local', 'share') # type: ignore
 
         if data_home is None:
             raise EnvironmentError(
-                'No $XDG_DATA_HOME or $HOME defined. Exiting.')
+                'No $XDG_DATA_HOME or $HOME defined.')
 
-        return os.path.join(data_home, ToddDB.DEFAULT_DB_FILE_NAME)
+        return os.path.join(data_home, 'todd', ToddDB.DEFAULT_DB_FILE_NAME)
 
     def __init__(self, db_file: Optional[str] = None) -> None:
+        self.loaded = False
+
         if not db_file:
             self.db_file = ToddDB._get_default_db_file()
+            try:
+                db_dir = os.path.dirname(self.db_file)
+                if not os.path.exists(db_dir):
+                    INFO('Creating DB path @ %s' % db_dir)
+                    os.makedirs(db_dir, exist_ok=True)
+            except OSError as e:
+                ERROR(e)
+                sys.exit(1)
         else:
             self.db_file = db_file
         INFO('DB file is: %s' % self.db_file)
+
+        # register adapters and converters
         sqlite3.register_adapter(list, adapt_list)
         sqlite3.register_converter('tags', convert_tags)
 
@@ -75,11 +85,14 @@ class ToddDB:
             )
             self.conn.commit()
         except Exception as e:
-            ERROR('DB connection: %s' % e)
+            ERROR('Database error: %s @ %s' % (e, self.db_file))
             sys.exit(1)
 
+        self.loaded = True
+
     def __del__(self) -> None:
-        self.conn.close()
+        if self.loaded:
+            self.conn.close()
 
     def count(self) -> int:
         return self.cursor.execute('SELECT COUNT(*) FROM todo').fetchone()[0]
@@ -120,7 +133,7 @@ class ToddDB:
 
         column = 'todo' if todo else 'tags'
         new = todo if todo else tags
-        query = f"UPDATE todo SET {column} = ? WHERE id = ?"
+        query = f'UPDATE todo SET {column} = ? WHERE id = ?'
         self.cursor.execute(query, (new, id))
 
         return Status.OK

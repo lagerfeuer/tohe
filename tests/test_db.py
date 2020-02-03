@@ -14,14 +14,27 @@ class ToddDBTest(unittest.TestCase):
     def setUp(self):
         os.environ['XDG_DATA_HOME'] = TEMP_DB_DIR
 
-        db_file = join(TEMP_DB_DIR, ToddDB.DEFAULT_DB_FILE_NAME)
+        db_file = join(TEMP_DB_DIR, 'todd', ToddDB.DEFAULT_DB_FILE_NAME)
         if exists(db_file):
             os.remove(db_file)
 
     def test_defaults(self):
         self.assertEqual(ToddDB.DEFAULT_DB_FILE_NAME, 'todd.db')
+        self.assertEqual(ToddDB._get_default_db_file(), os.path.join(
+            TEMP_DB_DIR, 'todd', ToddDB.DEFAULT_DB_FILE_NAME))
+        del os.environ['XDG_DATA_HOME']
+        self.assertEqual(ToddDB._get_default_db_file(), os.path.join(
+            os.environ['HOME'], '.local', 'share', 'todd', ToddDB.DEFAULT_DB_FILE_NAME))
+        del os.environ['HOME']
+        self.assertRaises(EnvironmentError, ToddDB._get_default_db_file)
 
     def test_dbfile_creation(self):
+        db = ToddDB()
+        db.cursor.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='todo'")
+        self.assertEqual(int(db.cursor.fetchone()[0]), 1)
+        del os.environ['XDG_DATA_HOME']
+        os.environ['HOME'] = TEMP_DB_DIR
         db = ToddDB()
         db.cursor.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='todo'")
