@@ -7,14 +7,48 @@ from argparse import ArgumentParser
 from colorama import init, Fore, Style
 from subprocess import call
 from typing import Optional, List
+from shutil import get_terminal_size
 
 from todd.db import ToddDB
 
 __VERSION__ = '0.1.0'
 
 
+def id_style(txt, rjust=0):
+    if rjust > 0:
+        txt = txt.rjust(rjust)
+    return Fore.BLUE + Style.BRIGHT + txt + Style.RESET_ALL
+
+
+def todo_style(txt, max_length):
+    if len(txt) >= max_length:
+        txt = txt[:max_length - 4] + '...'
+    return Fore.RED + Style.BRIGHT + txt + Style.RESET_ALL
+
+
+def tags_style(tags, sign='#', rjust=0, join_char=','):
+    txt = join_char.join(tags) if tags else ''
+    if rjust > 0:
+        sign = sign.rjust(rjust)
+    return Fore.GREEN + Style.BRIGHT + sign + ' ' + Fore.CYAN + txt + Style.RESET_ALL
+
+
 def ERROR(msg: str) -> None:
     print(Fore.RED + Style.BRIGHT + msg + Style.RESET_ALL)
+
+
+def print_rows(rows):
+    longest_id = len(str(rows[-1][0])) + 1
+    term_width = get_terminal_size()[0]
+    for row in rows:
+        (id, todo, tags) = row
+        id = id_style(str(id), rjust=longest_id)
+        todo = todo_style(todo, term_width)
+        tags = tags_style(tags, rjust=longest_id)
+
+        print(id, end=' ')
+        print(todo, end=('' if todo.endswith('\n') else '\n'))
+        print(tags)
 
 
 def call_editor(content: Optional[str] = None) -> str:
@@ -73,8 +107,8 @@ def main(argv: List[str] = sys.argv) -> None:
         TODD.add(content, tags=tags)
 
     if args.list:
-        todos = TODD.list()
-        print(todos)
+        rows = TODD.list()
+        print_rows(rows)
 
 
 if __name__ == "__main__":
