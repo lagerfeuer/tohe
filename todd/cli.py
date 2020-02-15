@@ -55,27 +55,41 @@ def print_rows(rows):
 
 def main(argv: List[str] = sys.argv) -> None:
     arg_parser = ArgumentParser(
-        'todd', description='todd - The TODO list manager')
+        prog='todd', description='todd - The TODO list manager')
     arg_parser.add_argument(
         '-v', '--version', action='store_true', help='show version number and exit')
 
-    ops = arg_parser.add_argument_group('OPERATIONS')
-    ops.add_argument('-a', '--add', nargs='?', metavar='CONTENT',
-                     help='add a new todo: if content is not supplied, $EDITOR will be opened',
-                     const='_default', default=None)
-    ops.add_argument('-l', '--list', help='list all todos',
-                     action='store_true', default=False)
-    ops.add_argument('-e', '--edit', help='edit a todo', metavar='ID')
-    ops.add_argument('-s', '--search', help='search all todos: TERM can be a phrase, word or tag',
-                     metavar='TERM')
-    ops.add_argument('-d', '--delete',
-                     help='delete todo by ID or tag', metavar='(ID|tag)')
+    subparsers = arg_parser.add_subparsers(
+        title='Operations', description='modifying the TODOs', dest='operation')
 
-    optops = arg_parser.add_argument_group('OPTIONAL')
-    optops.add_argument(
-        '-t', '--tag', help='add list of tags: -t tag1,tag2', metavar='TAGS')
-    optops.add_argument(
-        '-nt', '--notag', help='delete list of tags: -t tag1,tag2', metavar='TAGS')
+    add_p = subparsers.add_parser(
+        'add', help='add todo')
+    add_p.add_argument('content', nargs='?', metavar='CONTENT',
+                       help='add a new todo (if content is not supplied, $EDITOR will be opened)',
+                       const='_default', default=None)
+    add_p.add_argument(
+        '-t', '--tag', help='tags for the new todo', metavar='TAG', nargs='+', default=[])
+
+    list_p = subparsers.add_parser('list', help='list all todos')
+    list_p.add_argument(
+        '-t', '--tag', help='filter by tags', metavar='TAG', nargs='+', default=[])
+
+    edit_p = subparsers.add_parser('edit', help='edit a todo')
+    edit_p.add_argument('id', help='ID of entry to be modified', metavar='ID')
+    edit_p.add_argument('-t', '--tag', help='add tags to entry', nargs='+')
+    edit_p.add_argument(
+        '-r', '--rtag', help='remove tags from entry', nargs='+', default=[])
+
+    search_p = subparsers.add_parser('search', help='search all todos')
+    search_p.add_argument('term', help='search term')
+
+    delete_p = subparsers.add_parser('delete', help='delete a todo')
+    delete_p.add_argument('id', help='ID of entry to be deleted', metavar='ID')
+
+    help_p = subparsers.add_parser('help', help='print help message')
+
+    parsers = {'add': add_p, 'list': list_p, 'edit': edit_p,
+               'search': search_p, 'delete': delete_p, 'help': help_p}
 
     args = arg_parser.parse_args()
 
@@ -83,35 +97,35 @@ def main(argv: List[str] = sys.argv) -> None:
         print(__VERSION__)
         sys.exit(0)
 
-    if not any([args.add, args.edit, args.list, args.search, args.delete]):
+    if not args.operation:
         ERROR('No arguments given!')
+        arg_parser.print_help()
+        sys.exit(1)
+
+    if args.operation == 'help':
         arg_parser.print_help()
         sys.exit(1)
 
     TODD = ToddDB()
 
-    if args.add:
-        content = call_editor() if args.add == '_default' else args.add
-        # FIXME: find better way to deal with tags
-        # else:
-        #     tags = call_editor(
-        #         '# Enter tags below (one per line):').split('\n')
-        #     tags = [t for t in tags if not t.startswith('#')]
-        tags = args.tag.split(',') if args.tag else []
+    if args.operation == 'add':
+        content = call_editor() if args.content is None else args.content
+        tags = args.tag
         TODD.add(content, tags=tags)
 
-    elif args.list:
+    elif args.operation == 'list':
         rows = TODD.list()
         print_rows(rows)
 
-    elif args.edit:
+    elif args.operation == 'edit':
         pass
-    elif args.search:
+    elif args.operation == 'search':
         pass
-    elif args.delete:
+    elif args.operation == 'delete':
         pass
     else:
-        arg_parser.print_help()
+        # unreachable because of argparser
+        ERROR("Unrecognized operation '%s'!" % (args.operation,))
         sys.exit(1)
 
 
