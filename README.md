@@ -10,9 +10,16 @@ poetry install
 
 ## Unit tests
 ```sh
-poetry run pytest --mypy --cov=todd/ tests/
+poetry run pytest --cov=todd/ tests/
 # or
-poetry run python -m pytest --mypy --cov=todd/ tests/
+poetry run python -m pytest --cov=todd/ tests/
+```
+
+### mypy
+```sh
+poetry run mypy todd/
+# or
+poetry run python -m mypy todd/
 ```
 
 
