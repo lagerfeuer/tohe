@@ -9,10 +9,9 @@ from subprocess import call
 from typing import Optional, List
 from shutil import get_terminal_size
 
+from todd import __version__
 from todd.db import ToddDB
 from todd.util.editor import call_editor
-
-__VERSION__ = '0.1.0'
 
 
 def id_style(txt, rjust=0):
@@ -94,7 +93,7 @@ def main(argv: List[str] = sys.argv) -> None:
     args = arg_parser.parse_args()
 
     if args.version:
-        print(__VERSION__)
+        print(__version__)
         sys.exit(0)
 
     if not args.operation:
