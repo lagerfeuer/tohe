@@ -97,9 +97,9 @@ class ToddDB:
 
     def _check_id(self, id):
         self.cursor.execute('SELECT id FROM todo')
-        ids = self.cursor.fetchone()
+        ids = [i for (i,) in self.cursor.fetchall()]
         if id not in ids:
-            ERROR("ID '%d' does not exist!")
+            ERROR("ID '%d' does not exist!" % (id,))
             return Status.FAIL
         return Status.OK
 
@@ -159,6 +159,7 @@ class ToddDB:
         new = todo if todo else tags
         query = f'UPDATE todo SET {column} = ? WHERE id = ?'
         self.cursor.execute(query, (new, id))
+        self.conn.commit()
 
         return Status.OK
 
