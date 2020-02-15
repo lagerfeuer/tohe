@@ -49,6 +49,13 @@ class ToddDBTest(unittest.TestCase):
         db.cursor.execute('SELECT COUNT(*) FROM todo')
         self.assertEqual(db.cursor.fetchone()[0], 1)
 
+    def test_get(self):
+        db = ToddDB()
+        test_data = ('todo', ['test', 'tags'])
+        db.add('todo', tags=['test', 'tags'])
+        entry = db.get(1)
+        self.assertEqual(entry, (1, 'todo', ['test', 'tags']))
+
     def test_list(self):
         db = ToddDB()
         test_data = (1, 'body', ['test', 'tags'])

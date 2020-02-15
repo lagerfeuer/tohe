@@ -42,8 +42,9 @@ class ToddDB:
         Returns: database directory path (str)
         """
         data_home = os.getenv('XDG_DATA_HOME')
-        if data_home is None and (home := os.getenv('HOME')) is not None:
-            data_home = os.path.join(home, '.local', 'share') # type: ignore
+        home = os.getenv('HOME')
+        if data_home is None and home is not None:
+            data_home = os.path.join(home, '.local', 'share')  # type: ignore
 
         if data_home is None:
             raise EnvironmentError(
@@ -102,6 +103,16 @@ class ToddDB:
             self.cursor.execute('INSERT INTO todo(todo, tags) VALUES (?,?)',
                                 (todo, tags))
             self.conn.commit()
+        except sqlite3.DatabaseError as e:
+            ERROR("Database error: %s" % e)
+            return Status.FAIL
+        return Status.OK
+
+    def get(self, id: int) -> str:
+        try:
+            self.cursor.execute('SELECT * FROM todo WHERE id = ?', (id,))
+            entry = self.cursor.fetchone()
+            return entry
         except sqlite3.DatabaseError as e:
             ERROR("Database error: %s" % e)
             return Status.FAIL
