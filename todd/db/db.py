@@ -11,7 +11,8 @@ Tags = Union[List[str], str]
 
 
 def adapt_list(lst) -> str:
-    """Adapt list entries before writing to database.
+    """
+    Adapt list entries before writing to database.
 
     This function takes a list and serializes it in order to
     write it to the sqlite database as string.
@@ -20,7 +21,8 @@ def adapt_list(lst) -> str:
 
 
 def convert_tags(tags) -> list:
-    """Convert list entries after fetching it from the database.
+    """
+    Convert list entries after fetching it from the database.
 
     This function takes a serialized list entry for tags and deserializes it
     to return a Python list.
@@ -32,7 +34,8 @@ def convert_tags(tags) -> list:
 
 
 class ToddDB:
-    """Class representing a Todd instance, including the database connection to
+    """
+    Class representing a Todd instance, including the database connection to
     the sqlite storage.
 
     This class exposes methods to manipulate the database, like add, edit, delete and list.
@@ -41,7 +44,8 @@ class ToddDB:
 
     @staticmethod
     def _get_default_db_file() -> str:
-        """Return the directory which contains the database file.
+        """
+        Return the directory which contains the database file.
         Returns: database directory path (str)
         """
         data_home = os.getenv('XDG_DATA_HOME')
