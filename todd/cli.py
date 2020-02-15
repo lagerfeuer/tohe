@@ -4,7 +4,7 @@ import os
 import sys
 import tempfile
 from argparse import ArgumentParser
-from colorama import init, Fore, Style
+from colorama import init, Fore, Style # type: ignore
 from subprocess import call
 from typing import Optional, List, Tuple, cast
 from shutil import get_terminal_size
