@@ -51,10 +51,15 @@ class ToddDBTest(unittest.TestCase):
 
     def test_get(self):
         db = ToddDB()
-        test_data = ('todo', ['test', 'tags'])
         db.add('todo', tags=['test', 'tags'])
         entry = db.get(1)
         self.assertEqual(entry, (1, 'todo', ['test', 'tags']))
+
+    def test_get_fail(self):
+        db = ToddDB()
+        db.add('todo', tags=['test', 'tags'])
+        entry = db.get(3)
+        self.assertEqual(entry, Status.FAIL)
 
     def test_list(self):
         db = ToddDB()
@@ -90,6 +95,12 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual(status, Status.OK)
         db.cursor.execute('SELECT tags FROM todo')
         self.assertEqual(db.cursor.fetchone()[0], ['notag'])
+
+    def test_edit_wrong_id(self):
+        db = ToddDB()
+        db.add('body', tags=['test', 'tags'])
+        # todo
+        status = db.edit(id=2, todo='changed body')
 
     def test_delete_arguments_none(self):
         db = ToddDB()

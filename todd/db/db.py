@@ -95,6 +95,14 @@ class ToddDB:
         if self.loaded:
             self.conn.close()
 
+    def _check_id(self, id):
+        self.cursor.execute('SELECT id FROM todo')
+        ids = self.cursor.fetchone()
+        if id not in ids:
+            ERROR("ID '%d' does not exist!")
+            return Status.FAIL
+        return Status.OK
+
     def count(self) -> int:
         return self.cursor.execute('SELECT COUNT(*) FROM todo').fetchone()[0]
 
@@ -109,6 +117,8 @@ class ToddDB:
         return Status.OK
 
     def get(self, id: int) -> str:
+        if self._check_id(id) != Status.OK:
+            return Status.FAIL
         try:
             self.cursor.execute('SELECT * FROM todo WHERE id = ?', (id,))
             entry = self.cursor.fetchone()
@@ -141,6 +151,9 @@ class ToddDB:
         if todo is not None and tags is not None:
             raise RuntimeError(
                 'EDIT: both todo and tags should be changed. You can only change one at a time.')
+
+        if self._check_id(id) != Status.OK:
+            return Status.FAIL
 
         column = 'todo' if todo else 'tags'
         new = todo if todo else tags
