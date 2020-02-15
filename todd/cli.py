@@ -6,12 +6,13 @@ import tempfile
 from argparse import ArgumentParser
 from colorama import init, Fore, Style
 from subprocess import call
-from typing import Optional, List
+from typing import Optional, List, Tuple, cast
 from shutil import get_terminal_size
 
 from todd import __version__
 from todd.db import ToddDB
 from todd.util.editor import call_editor
+from todd.util.status import Status
 
 
 def id_style(txt, rjust=0):
@@ -31,7 +32,11 @@ def tags_style(tags, sign='#', rjust=0, join_char=','):
     txt = join_char.join(tags) if tags else ''
     if rjust > 0:
         sign = sign.rjust(rjust)
-    return Fore.GREEN + Style.BRIGHT + sign + ' ' + Fore.CYAN + txt + Style.RESET_ALL
+    return Fore.GREEN + sign + ' ' + Fore.CYAN + txt + Style.RESET_ALL
+
+
+def INFO(msg: str) -> None:
+    print(Fore.GREEN + Style.BRIGHT + msg + Style.RESET_ALL)
 
 
 def ERROR(msg: str) -> None:
@@ -39,6 +44,8 @@ def ERROR(msg: str) -> None:
 
 
 def print_rows(rows):
+    if not rows:
+        return
     longest_id = len(str(rows[-1][0])) + 1
     term_width = get_terminal_size()[0]
     for row in rows:
@@ -57,6 +64,10 @@ def main(argv: List[str] = sys.argv) -> None:
         prog='todd', description='todd - The TODO list manager')
     arg_parser.add_argument(
         '-v', '--version', action='store_true', help='show version number and exit')
+    arg_parser.add_argument('-db', help='database file to use')
+    arg_parser.add_argument(
+        '-L', '--loglevel', help='set the log level', choices='DEBUG INFO WARN ERROR'.split())
+    # TODO add option to sort tags
 
     subparsers = arg_parser.add_subparsers(
         title='Operations', description='modifying the TODOs', dest='operation')
@@ -67,23 +78,29 @@ def main(argv: List[str] = sys.argv) -> None:
                        help='add a new todo (if content is not supplied, $EDITOR will be opened)',
                        const='_default', default=None)
     add_p.add_argument(
-        '-t', '--tag', help='tags for the new todo', metavar='TAG', nargs='+', default=[])
+        '-t', '--tag', help='tags for the new todo', metavar='TAG', nargs='+', default=[], dest='tags')
 
     list_p = subparsers.add_parser('list', help='list all todos')
     list_p.add_argument(
-        '-t', '--tag', help='filter by tags', metavar='TAG', nargs='+', default=[])
+        '-t', '--tag', help='filter by tags', metavar='TAG', nargs='+', default=[], dest='tags')
 
     edit_p = subparsers.add_parser('edit', help='edit a todo')
-    edit_p.add_argument('id', help='ID of entry to be modified', metavar='ID')
-    edit_p.add_argument('-t', '--tag', help='add tags to entry', nargs='+')
     edit_p.add_argument(
-        '-r', '--rtag', help='remove tags from entry', nargs='+', default=[])
+        'id', type=int, help='ID of entry to be modified', metavar='ID')
+    edit_p.add_argument(
+        '-t', '--tag', help='add tags to entry', nargs='+', dest='tags')
+    edit_p.add_argument(
+        '-r', '--rtag', help='remove tags from entry', nargs='+', default=[], dest='rtags')
 
     search_p = subparsers.add_parser('search', help='search all todos')
     search_p.add_argument('term', help='search term')
+    search_p.add_argument(
+        '-w', '--wildcard', help='enable wildcards in search terms (default is off)',
+        action='store_true', default=False)
 
     delete_p = subparsers.add_parser('delete', help='delete a todo')
-    delete_p.add_argument('id', help='ID of entry to be deleted', metavar='ID')
+    delete_p.add_argument(
+        'id', type=int, help='ID of entry to be deleted', metavar='ID')
 
     help_p = subparsers.add_parser('help', help='print help message')
 
@@ -109,19 +126,46 @@ def main(argv: List[str] = sys.argv) -> None:
 
     if args.operation == 'add':
         content = call_editor() if args.content is None else args.content
-        tags = args.tag
-        TODD.add(content, tags=tags)
+        TODD.add(content, tags=args.tags)
 
     elif args.operation == 'list':
-        rows = TODD.list()
+        tags = args.tags if args.tags else None
+        rows = TODD.list(tags=tags)
+        if rows is None or not rows:
+            INFO('No entries yet!')
         print_rows(rows)
 
     elif args.operation == 'edit':
-        pass
+        entry = TODD.get(args.id)
+        if entry == Status.FAIL:
+            sys.exit(1)
+        (_, content, tags) = cast(Tuple, entry)
+        if args.rtags:
+            tags = [t for t in tags if t not in args.rtags]
+        if args.tags:
+            tags += args.tags
+
+        if args.tags or args.rtags:
+            status = TODD.edit(id=args.id, tags=tags)
+            if status != Status.OK:
+                sys.exit(1)
+        else:  # only open editor of no tags are changing
+            content = call_editor(content=content)
+            status = TODD.edit(id=args.id, todo=content)
+            if status != Status.OK:
+                sys.exit(1)
+
     elif args.operation == 'search':
-        pass
+        entries = TODD.search(term=args.term, wildcards=args.wildcard)
+        if entries is None or not entries:
+            INFO('No results!')
+        print_rows(entries)
+
     elif args.operation == 'delete':
-        pass
+        # TODO add option to delete by tag/tags
+        status = TODD.delete(args.id)
+        if status != Status.OK:
+            sys.exit(1)
     else:
         # unreachable because of argparser
         ERROR("Unrecognized operation '%s'!" % (args.operation,))

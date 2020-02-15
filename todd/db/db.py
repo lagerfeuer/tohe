@@ -1,7 +1,7 @@
 import os
 import sys
 import sqlite3
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 
 from todd.log import *  # pylint: disable=unused-wildcard-import
 from todd.util.status import Status
@@ -25,7 +25,10 @@ def convert_tags(tags) -> list:
     This function takes a serialized list entry for tags and deserializes it
     to return a Python list.
     """
-    return [tag.decode('utf-8') for tag in tags.split(b'|')]
+    result = [tag.decode('utf-8') for tag in tags.split(b'|')]
+    if result is None:
+        return []
+    return result
 
 
 class ToddDB:
@@ -116,19 +119,33 @@ class ToddDB:
             return Status.FAIL
         return Status.OK
 
-    def get(self, id: int) -> str:
+    def get(self, id: int) -> Union[Tuple, Status]:
         if self._check_id(id) != Status.OK:
             return Status.FAIL
+
+        entry: Tuple
         try:
             self.cursor.execute('SELECT * FROM todo WHERE id = ?', (id,))
             entry = self.cursor.fetchone()
-            return entry
         except sqlite3.DatabaseError as e:
             ERROR("Database error: %s" % e)
             return Status.FAIL
-        return Status.OK
+        return entry
 
-    def list(self, tags: Optional[Tags] = None) -> list:
+    def get_last(self) -> Union[Tuple, Status]:
+        if self.count == 0:
+            return Status.EMPTY
+
+        entry: Tuple
+        try:
+            self.cursor.execute('SELECT * FROM todo ORDER BY id DESC LIMIT 1')
+            entry = self.cursor.fetchone()
+        except sqlite3.DatabaseError as e:
+            ERROR("Database error: %s" % e)
+            return Status.FAIL
+        return entry
+
+    def list(self, tags: Optional[Tags] = None) -> List[Tuple]:
         # TODO add support for tags
         self.cursor.execute('SELECT * FROM todo')
         entries = self.cursor.fetchall()
@@ -137,7 +154,11 @@ class ToddDB:
     def search(self, term: str, wildcards: bool = True) -> List[int]:
         if wildcards:
             term = term.replace('*', '%').replace('?', '_')
-        self.cursor.execute("SELECT * FROM todo WHERE todo LIKE ?", (term,))
+            query = "SELECT * FROM todo WHERE todo LIKE ?"
+        else:
+            term = f"%{term}%"
+            query = "SELECT * FROM todo WHERE todo LIKE ?"
+        self.cursor.execute(query, (term,))
         entries = self.cursor.fetchall()
         return entries
 
@@ -166,6 +187,9 @@ class ToddDB:
     def delete(self,
                id: Optional[Id] = None,
                tags: Optional[Tags] = None) -> Status:
+        if id is not None and self._check_id(id) != Status.OK:
+            return Status.FAIL
+
         if id is None and tags is None:
             raise RuntimeError(
                 'DELETE: but neither id nor tags was supplied.')
