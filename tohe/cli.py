@@ -94,7 +94,7 @@ def main(argv: List[str] = sys.argv) -> None:
         '-r', '--rtag', help='remove tags from entry', nargs='+', default=[], dest='rtags')
 
     search_p = subparsers.add_parser('search', help='search all todos')
-    search_p.add_argument('term', help='search term')
+    search_p.add_argument('term', help='search term', metavar='TERM')
     search_p.add_argument(
         '-w', '--wildcard', help='enable wildcards in search terms (default is off)',
         action='store_true', default=False)
