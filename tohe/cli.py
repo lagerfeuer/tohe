@@ -109,6 +109,13 @@ def main(argv: List[str] = sys.argv) -> None:
                'search': search_p, 'delete': delete_p, 'help': help_p}
 
     args = arg_parser.parse_args()
+    if args.db or args.loglevel:
+        if args.db:
+            option = '-db'
+        if args.loglevel:
+            option = '--loglevel'
+        ERROR("Currently unsupported option: %s" % (option,))
+        sys.exit(-1)
 
     if args.version:
         print(__version__)
