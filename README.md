@@ -64,12 +64,10 @@ poetry run python -m mypy tohe/
 
 
 ## TODO
+- [ ] Add support for currently unsupported options like `-db` and `--loglevel`.
 - [ ] Add Bash and Zsh completion
 - [ ] Add docstrings
-- [ ] How should headers be treated?
-  * First line is header (i.e. `# header line` or just `header line`)
-  * Tag line is header (i.e. `header: header line`)
-- [ ] If using a header line, do the same with tags (i.e. `tags: main,todo,test`)
+- [ ] Maybe enable tag editing in the editor (i.e. `tags: main,todo,test`)
 - [ ] Build a web server around it for easier reading and editing
 - [ ] Add fzf support for searching
 - [ ] Add ncurses TUI
