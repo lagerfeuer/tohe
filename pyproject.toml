@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "todd"
-version = "0.1.0"
+version = "0.2.0"
 description = "Todd - The friendly TODO list manager"
 authors = ["Lukas Deutz <lukas.deutz@mailfence.com>"]
 license = "MIT"
