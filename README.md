@@ -1,5 +1,5 @@
-# todd
-Todd, the TODO list helper
+# tohe
+tohe - the TODO list helper
 
 # Development
 
@@ -10,16 +10,16 @@ poetry install
 
 ## Unit tests
 ```sh
-poetry run pytest --cov=todd/ tests/
+poetry run pytest --cov=tohe/ tests/
 # or
-poetry run python -m pytest --cov=todd/ tests/
+poetry run python -m pytest --cov=tohe/ tests/
 ```
 
 ### mypy
 ```sh
-poetry run mypy todd/
+poetry run mypy tohe/
 # or
-poetry run python -m mypy todd/
+poetry run python -m mypy tohe/
 ```
 
 
