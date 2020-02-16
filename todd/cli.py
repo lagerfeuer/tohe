@@ -4,7 +4,7 @@ import os
 import sys
 import tempfile
 from argparse import ArgumentParser
-from colorama import init, Fore, Style # type: ignore
+from colorama import init, Fore, Style  # type: ignore
 from subprocess import call
 from typing import Optional, List, Tuple, cast
 from shutil import get_terminal_size
@@ -78,7 +78,8 @@ def main(argv: List[str] = sys.argv) -> None:
                        help='add a new todo (if content is not supplied, $EDITOR will be opened)',
                        const='_default', default=None)
     add_p.add_argument(
-        '-t', '--tag', help='tags for the new todo', metavar='TAG', nargs='+', default=[], dest='tags')
+        '-t', '--tag', help='tags for the new todo', metavar='TAG',
+        nargs='+', default=[], dest='tags')
 
     list_p = subparsers.add_parser('list', help='list all todos')
     list_p.add_argument(
@@ -140,6 +141,8 @@ def main(argv: List[str] = sys.argv) -> None:
         if entry == Status.FAIL:
             sys.exit(1)
         (_, content, tags) = cast(Tuple, entry)
+        if tags is None:
+            tags = []
         if args.rtags:
             tags = [t for t in tags if t not in args.rtags]
         if args.tags:
