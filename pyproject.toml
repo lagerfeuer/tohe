@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "todd"
-version = "0.2.0"
+version = "0.2.1"
 description = "Todd - The friendly TODO list manager"
 authors = ["Lukas Deutz <lukas.deutz@mailfence.com>"]
 license = "MIT"
@@ -13,7 +13,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.0"
+python = "^3.5"
 colorama = "^0.4.3"
 
 [tool.poetry.dev-dependencies]
