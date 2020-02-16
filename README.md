@@ -24,6 +24,7 @@ poetry run python -m mypy todd/
 
 
 ## TODO
+- [ ] Add Bash and Zsh completion
 - [ ] Add docstrings
 - [ ] How should headers be treated?
   * First line is header (i.e. `# header line` or just `header line`)
