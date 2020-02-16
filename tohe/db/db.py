@@ -3,8 +3,8 @@ import sys
 import sqlite3
 from typing import Optional, List, Union, Tuple
 
-from todd.log import *  # pylint: disable=unused-wildcard-import
-from todd.util.status import Status
+from tohe.log import *  # pylint: disable=unused-wildcard-import
+from tohe.util.status import Status
 
 Id = Union[List[int], int]
 Tags = Union[List[str], str]
@@ -33,14 +33,14 @@ def convert_tags(tags) -> list:
     return result
 
 
-class ToddDB:
+class ToheDB:
     """
-    Class representing a Todd instance, including the database connection to
+    Class representing a Tohe instance, including the database connection to
     the sqlite storage.
 
     This class exposes methods to manipulate the database, like add, edit, delete and list.
     """
-    DEFAULT_DB_FILE_NAME = 'todd.db'
+    DEFAULT_DB_FILE_NAME = 'tohe.db'
 
     @staticmethod
     def _get_default_db_file() -> str:
@@ -57,13 +57,13 @@ class ToddDB:
             raise EnvironmentError(
                 'No $XDG_DATA_HOME or $HOME defined.')
 
-        return os.path.join(data_home, 'todd', ToddDB.DEFAULT_DB_FILE_NAME)
+        return os.path.join(data_home, 'tohe', ToheDB.DEFAULT_DB_FILE_NAME)
 
     def __init__(self, db_file: Optional[str] = None) -> None:
         self.loaded = False
 
         if not db_file:
-            self.db_file = ToddDB._get_default_db_file()
+            self.db_file = ToheDB._get_default_db_file()
             try:
                 db_dir = os.path.dirname(self.db_file)
                 if not os.path.exists(db_dir):

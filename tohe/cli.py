@@ -9,10 +9,10 @@ from subprocess import call
 from typing import Optional, List, Tuple, cast
 from shutil import get_terminal_size
 
-from todd import __version__
-from todd.db import ToddDB
-from todd.util.editor import call_editor
-from todd.util.status import Status
+from tohe import __version__
+from tohe.db import ToheDB
+from tohe.util.editor import call_editor
+from tohe.util.status import Status
 
 
 def id_style(txt, rjust=0):
@@ -61,7 +61,7 @@ def print_rows(rows):
 
 def main(argv: List[str] = sys.argv) -> None:
     arg_parser = ArgumentParser(
-        prog='todd', description='todd - The TODO list manager')
+        prog='tohe', description='tohe - The TODO list manager')
     arg_parser.add_argument(
         '-v', '--version', action='store_true', help='show version number and exit')
     arg_parser.add_argument('-db', help='database file to use')
@@ -123,21 +123,21 @@ def main(argv: List[str] = sys.argv) -> None:
         arg_parser.print_help()
         sys.exit(1)
 
-    TODD = ToddDB()
+    TOHE = ToheDB()
 
     if args.operation == 'add':
         content = call_editor() if args.content is None else args.content
-        TODD.add(content, tags=args.tags)
+        TOHE.add(content, tags=args.tags)
 
     elif args.operation == 'list':
         tags = args.tags if args.tags else None
-        rows = TODD.list(tags=tags)
+        rows = TOHE.list(tags=tags)
         if rows is None or not rows:
             INFO('No entries yet!')
         print_rows(rows)
 
     elif args.operation == 'edit':
-        entry = TODD.get(args.id)
+        entry = TOHE.get(args.id)
         if entry == Status.FAIL:
             sys.exit(1)
         (_, content, tags) = cast(Tuple, entry)
@@ -149,24 +149,24 @@ def main(argv: List[str] = sys.argv) -> None:
             tags += args.tags
 
         if args.tags or args.rtags:
-            status = TODD.edit(id=args.id, tags=tags)
+            status = TOHE.edit(id=args.id, tags=tags)
             if status != Status.OK:
                 sys.exit(1)
         else:  # only open editor of no tags are changing
             content = call_editor(content=content)
-            status = TODD.edit(id=args.id, todo=content)
+            status = TOHE.edit(id=args.id, todo=content)
             if status != Status.OK:
                 sys.exit(1)
 
     elif args.operation == 'search':
-        entries = TODD.search(term=args.term, wildcards=args.wildcard)
+        entries = TOHE.search(term=args.term, wildcards=args.wildcard)
         if entries is None or not entries:
             INFO('No results!')
         print_rows(entries)
 
     elif args.operation == 'delete':
         # TODO add option to delete by tag/tags
-        status = TODD.delete(args.id)
+        status = TOHE.delete(args.id)
         if status != Status.OK:
             sys.exit(1)
     else:

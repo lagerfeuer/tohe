@@ -1,4 +1,4 @@
-from todd.db import adapt_list, convert_tags
+from tohe.db import adapt_list, convert_tags
 
 import unittest
 

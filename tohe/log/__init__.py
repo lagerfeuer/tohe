@@ -1,7 +1,7 @@
 import logging
 import os
 
-LOGGER = logging.getLogger('Todd')
+LOGGER = logging.getLogger('Tohe')
 DEBUG = LOGGER.debug
 INFO = LOGGER.info
 WARN = LOGGER.warning

@@ -3,45 +3,45 @@ import tempfile
 import os
 from os.path import exists, join
 
-from todd.db import ToddDB
-from todd.util.status import Status
+from tohe.db import ToheDB
+from tohe.util.status import Status
 
-TEMP_DB_DIR = tempfile.mkdtemp(prefix='todd_test_')
+TEMP_DB_DIR = tempfile.mkdtemp(prefix='tohe_test_')
 
 
 # TODO: Add setup function that adds one todo (easier)
-class ToddDBTest(unittest.TestCase):
+class ToheDBTest(unittest.TestCase):
     def setUp(self):
         os.environ['XDG_DATA_HOME'] = TEMP_DB_DIR
 
-        db_file = join(TEMP_DB_DIR, 'todd', ToddDB.DEFAULT_DB_FILE_NAME)
+        db_file = join(TEMP_DB_DIR, 'tohe', ToheDB.DEFAULT_DB_FILE_NAME)
         if exists(db_file):
             os.remove(db_file)
 
     def test_defaults(self):
-        self.assertEqual(ToddDB.DEFAULT_DB_FILE_NAME, 'todd.db')
-        self.assertEqual(ToddDB._get_default_db_file(), os.path.join(
-            TEMP_DB_DIR, 'todd', ToddDB.DEFAULT_DB_FILE_NAME))
+        self.assertEqual(ToheDB.DEFAULT_DB_FILE_NAME, 'tohe.db')
+        self.assertEqual(ToheDB._get_default_db_file(), os.path.join(
+            TEMP_DB_DIR, 'tohe', ToheDB.DEFAULT_DB_FILE_NAME))
         del os.environ['XDG_DATA_HOME']
-        self.assertEqual(ToddDB._get_default_db_file(), os.path.join(
-            os.environ['HOME'], '.local', 'share', 'todd', ToddDB.DEFAULT_DB_FILE_NAME))
+        self.assertEqual(ToheDB._get_default_db_file(), os.path.join(
+            os.environ['HOME'], '.local', 'share', 'tohe', ToheDB.DEFAULT_DB_FILE_NAME))
         del os.environ['HOME']
-        self.assertRaises(EnvironmentError, ToddDB._get_default_db_file)
+        self.assertRaises(EnvironmentError, ToheDB._get_default_db_file)
 
     def test_dbfile_creation(self):
-        db = ToddDB()
+        db = ToheDB()
         db.cursor.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='todo'")
         self.assertEqual(int(db.cursor.fetchone()[0]), 1)
         del os.environ['XDG_DATA_HOME']
         os.environ['HOME'] = TEMP_DB_DIR
-        db = ToddDB()
+        db = ToheDB()
         db.cursor.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='todo'")
         self.assertEqual(int(db.cursor.fetchone()[0]), 1)
 
     def test_add(self):
-        db = ToddDB()
+        db = ToheDB()
         test_data = ('todo', ['test', 'tags'])
         db.add('todo', tags=['test', 'tags'])
         db.cursor.execute('SELECT todo, tags FROM todo')
@@ -50,19 +50,19 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual(db.cursor.fetchone()[0], 1)
 
     def test_get(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('todo', tags=['test', 'tags'])
         entry = db.get(1)
         self.assertEqual(entry, (1, 'todo', ['test', 'tags']))
 
     def test_get_fail(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('todo', tags=['test', 'tags'])
         entry = db.get(3)
         self.assertEqual(entry, Status.FAIL)
 
     def test_list(self):
-        db = ToddDB()
+        db = ToheDB()
         test_data = (1, 'body', ['test', 'tags'])
         db.add('body', tags=['test', 'tags'])
         entries = db.list()
@@ -70,7 +70,7 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual(entries.pop(), test_data)
 
     def test_search_id(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('MyTODO', ['tag'])
         ref = db.list()
         entries = db.search("MyTODO")
@@ -83,7 +83,7 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual([], entries)
 
     def test_edit_id(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('body', tags=['test', 'tags'])
         # todo
         status = db.edit(id=1, todo='changed body')
@@ -97,17 +97,17 @@ class ToddDBTest(unittest.TestCase):
         self.assertEqual(db.cursor.fetchone()[0], ['notag'])
 
     def test_edit_wrong_id(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('body', tags=['test', 'tags'])
         # todo
         status = db.edit(id=2, todo='changed body')
 
     def test_delete_arguments_none(self):
-        db = ToddDB()
+        db = ToheDB()
         self.assertRaises(RuntimeError, db.delete)
 
     def test_delete_id(self):
-        db = ToddDB()
+        db = ToheDB()
         db.add('todo 1', tags=['tag1', 'tags'])
         db.add('todo 2', tags=['tag2', 'tags'])
         status = db.delete(id=1)
